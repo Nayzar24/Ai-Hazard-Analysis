@@ -1,38 +1,27 @@
 import openai
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import firebase_admin
-from firebase_admin import credentials, storage, firestore
 import os
 import tempfile
 import PyPDF2
 import docx
 from io import BytesIO
+import requests
+import json
 
 # 🔑 Set your API key from environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
     print("Warning: OPENAI_API_KEY environment variable not set!")
 
-# 🔥 Initialize Firebase Admin SDK
-if not firebase_admin._apps:
-    try:
-        # Try to use default credentials first (for local development)
-        firebase_admin.initialize_app(options={
-            'storageBucket': 'safety-70570.appspot.com'
-        })
-        print("Firebase initialized with default credentials")
-    except Exception as e:
-        print(f"Firebase initialization failed: {e}")
-        print("Document functionality will be limited")
+# 🔥 Initialize Supabase
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
-# Initialize Firestore
-try:
-    db = firestore.client()
-    print("Firestore client initialized")
-except Exception as e:
-    print(f"Firestore initialization failed: {e}")
-    db = None
+if SUPABASE_URL and SUPABASE_KEY:
+    print("Supabase credentials found")
+else:
+    print("Warning: Supabase credentials not found. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.")
 
 # 📄 Document Processing Functions
 def extract_text_from_pdf(file_content):
