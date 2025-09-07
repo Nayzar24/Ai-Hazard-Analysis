@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FaFlask, FaInfoCircle, FaEnvelope, FaBars, FaUserCircle, FaSearch, FaSignOutAlt, FaGoogle, FaComments, FaTimes } from 'react-icons/fa';
 import logo from './logo.svg';
-import { auth, googleProvider, db } from './firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { supabase } from './supabase';
 import jsPDF from 'jspdf';
 import { API_ENDPOINTS } from './config';
 
