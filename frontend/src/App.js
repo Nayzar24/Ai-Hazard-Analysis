@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FaFlask, FaInfoCircle, FaEnvelope, FaBars, FaUserCircle, FaSearch, FaSignOutAlt, FaGoogle, FaComments, FaTimes } from 'react-icons/fa';
 import logo from './logo.svg';
-import { supabase } from './supabase';
+// import { supabase } from './supabase'; // Temporarily disabled for deployment
 import jsPDF from 'jspdf';
 import { API_ENDPOINTS } from './config';
 
@@ -106,9 +106,11 @@ function AuthModal({ show, onClose, onAuth }) {
     setError('');
     try {
       if (isSignup) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // await createUserWithEmailAndPassword(auth, email, password); // Temporarily disabled
+        console.log('Signup temporarily disabled for deployment');
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        // await signInWithEmailAndPassword(auth, email, password); // Temporarily disabled
+        console.log('Signin temporarily disabled for deployment');
       }
       onAuth();
     } catch (err) {
@@ -119,7 +121,8 @@ function AuthModal({ show, onClose, onAuth }) {
   const handleGoogle = async () => {
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
+      // await signInWithPopup(auth, googleProvider); // Temporarily disabled
+      console.log('Google auth temporarily disabled for deployment');
       onAuth();
     } catch (err) {
       setError(err.message);
@@ -904,13 +907,14 @@ function MyReports({ user }) {
         setError(null);
         console.log('Fetching reports for user:', user.uid);
         
-        const q = query(
-          collection(db, 'reports'), 
-          where('uid', '==', user.uid), 
-          orderBy('created', 'desc')
-        );
+        // const q = query(
+        //   collection(db, 'reports'), 
+        //   where('uid', '==', user.uid), 
+        //   orderBy('created', 'desc')
+        // );
         
-      const snap = await getDocs(q);
+      // const snap = await getDocs(q); // Temporarily disabled
+      const snap = { docs: [] }; // Empty for now
         console.log('Found reports:', snap.docs.length);
         
         const reportsData = snap.docs.map(doc => ({ 
@@ -938,13 +942,14 @@ function MyReports({ user }) {
         try {
           console.log('Refreshing reports for user:', user.uid);
           
-          const q = query(
-            collection(db, 'reports'), 
-            where('uid', '==', user.uid), 
-            orderBy('created', 'desc')
-          );
+          // const q = query(
+          //   collection(db, 'reports'), 
+          //   where('uid', '==', user.uid), 
+          //   orderBy('created', 'desc')
+          // );
           
-          const snap = await getDocs(q);
+          // const snap = await getDocs(q); // Temporarily disabled
+          const snap = { docs: [] }; // Empty for now
           console.log('Found reports after refresh:', snap.docs.length);
           
           const reportsData = snap.docs.map(doc => ({ 
@@ -1288,8 +1293,9 @@ function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsub();
+    // const unsub = onAuthStateChanged(auth, (u) => setUser(u)); // Temporarily disabled
+    setUser(null); // No user for now
+    // return () => unsub(); // Temporarily disabled
   }, []);
 
   const handleSubmit = async (e, tempUnit, pressureUnit, flowRate, flowRateUnit, operationPhase, equipmentVolume, volumeUnit, phase, location, locationProximity, utilities) => {
@@ -1386,8 +1392,9 @@ function App() {
               chemicals: chemicals.length
             });
             
-            const docRef = await addDoc(collection(db, 'reports'), reportData);
-            console.log('Report saved to database with ID:', docRef.id);
+            // const docRef = await addDoc(collection(db, 'reports'), reportData); // Temporarily disabled
+            console.log('Report save temporarily disabled for deployment');
+            // console.log('Report saved to database with ID:', docRef.id); // Temporarily disabled
           } catch (dbError) {
             console.error('Database save error:', dbError);
             // Don't fail the whole request if DB save fails
@@ -1409,7 +1416,10 @@ function App() {
     }
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = () => {
+    // signOut(auth); // Temporarily disabled
+    console.log('Logout temporarily disabled for deployment');
+  };
   
   const resetLoadingState = () => {
     console.log('Manually resetting loading state');
