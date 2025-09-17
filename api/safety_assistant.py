@@ -19,7 +19,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_ANON_KEY")
 
 supabase = None
 if SUPABASE_URL and SUPABASE_KEY:
