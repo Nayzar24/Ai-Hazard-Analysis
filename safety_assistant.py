@@ -8,36 +8,25 @@ import docx
 from io import BytesIO
 import requests
 import json
-import firebase_admin
-from firebase_admin import credentials, firestore
+from supabase import create_client, Client
 
 # 🔑 Set your API key from environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
     print("Warning: OPENAI_API_KEY environment variable not set!")
 
-# 🔥 Initialize Firebase
-db = None
-try:
-    # Initialize Firebase Admin SDK
-    if not firebase_admin._apps:
-        # For Vercel deployment, we'll use default credentials
-        # Make sure to set GOOGLE_APPLICATION_CREDENTIALS in Vercel
-        cred = credentials.ApplicationDefault()
-        firebase_admin.initialize_app(cred)
-    
-    db = firestore.client()
-    print("Firebase initialized successfully")
-except Exception as e:
-    print(f"Warning: Firebase initialization failed: {e}")
-    print("Document storage will not be available")
-
 # 🔥 Initialize Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
+supabase = None
 if SUPABASE_URL and SUPABASE_KEY:
-    print("Supabase credentials found")
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        print("Supabase initialized successfully")
+    except Exception as e:
+        print(f"Warning: Supabase initialization failed: {e}")
+        print("Document storage will not be available")
 else:
     print("Warning: Supabase credentials not found. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.")
 
@@ -80,21 +69,19 @@ def extract_text_from_file(file_content, filename):
         return ""
 
 def get_relevant_documents(query, limit=5):
-    """Retrieve relevant documents from Firebase Storage based on query"""
-    if db is None:
-        print("Firestore not available, returning empty document list")
+    """Retrieve relevant documents from Supabase based on query"""
+    if supabase is None:
+        print("Supabase not available, returning empty document list")
         return []
     
     try:
-        # Get all documents from Firestore metadata
-        docs_ref = db.collection('documents')
-        docs = docs_ref.get()
+        # Get all documents from Supabase
+        response = supabase.table('documents').select('*').execute()
         
         relevant_docs = []
-        for doc in docs:
-            doc_data = doc.to_dict()
-            filename = doc_data.get('filename', '')
-            content = doc_data.get('content', '')
+        for doc in response.data:
+            filename = doc.get('filename', '')
+            content = doc.get('content', '')
             
             # Simple relevance check - look for keywords in filename and content
             query_lower = query.lower()
@@ -104,7 +91,7 @@ def get_relevant_documents(query, limit=5):
                 relevant_docs.append({
                     'filename': filename,
                     'content': content[:2000],  # Limit content length
-                    'upload_date': doc_data.get('upload_date', '')
+                    'upload_date': doc.get('upload_date', '')
                 })
         
         return relevant_docs[:limit]
@@ -382,8 +369,8 @@ def clear_chat_session(session_id):
 def upload_document():
     """Upload and process engineering documents"""
     try:
-        if db is None:
-            return jsonify({'error': 'Document storage not available. Firebase not configured.'}), 503
+        if supabase is None:
+            return jsonify({'error': 'Document storage temporarily unavailable. Please try again later.'}), 503
         
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
@@ -402,21 +389,21 @@ def upload_document():
         if not extracted_text:
             return jsonify({'error': 'Could not extract text from document'}), 400
         
-        # Store document metadata in Firestore
+        # Store document metadata in Supabase
         doc_data = {
             'filename': filename,
             'content': extracted_text,
-            'upload_date': firestore.SERVER_TIMESTAMP,
+            'upload_date': 'now()',
             'file_size': len(file_content),
             'content_length': len(extracted_text)
         }
         
-        # Save to Firestore
-        doc_ref = db.collection('documents').add(doc_data)
+        # Save to Supabase
+        response = supabase.table('documents').insert(doc_data).execute()
         
         return jsonify({
             'message': 'Document uploaded successfully',
-            'document_id': doc_ref[1].id,
+            'document_id': response.data[0]['id'] if response.data else 'unknown',
             'filename': filename,
             'content_preview': extracted_text[:500] + '...' if len(extracted_text) > 500 else extracted_text
         })
@@ -428,21 +415,19 @@ def upload_document():
 def list_documents():
     """List all uploaded documents"""
     try:
-        if db is None:
-            return jsonify({'error': 'Document storage not available. Firebase not configured.'}), 503
+        if supabase is None:
+            return jsonify({'error': 'Document storage temporarily unavailable. Please try again later.'}), 503
         
-        docs_ref = db.collection('documents')
-        docs = docs_ref.order_by('upload_date', direction=firestore.Query.DESCENDING).get()
+        response = supabase.table('documents').select('*').order('upload_date', desc=True).execute()
         
         documents = []
-        for doc in docs:
-            doc_data = doc.to_dict()
+        for doc in response.data:
             documents.append({
-                'id': doc.id,
-                'filename': doc_data.get('filename', ''),
-                'upload_date': doc_data.get('upload_date', ''),
-                'file_size': doc_data.get('file_size', 0),
-                'content_length': doc_data.get('content_length', 0)
+                'id': doc['id'],
+                'filename': doc.get('filename', ''),
+                'upload_date': doc.get('upload_date', ''),
+                'file_size': doc.get('file_size', 0),
+                'content_length': doc.get('content_length', 0)
             })
         
         return jsonify({'documents': documents})
