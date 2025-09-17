@@ -8,11 +8,29 @@ import docx
 from io import BytesIO
 import requests
 import json
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # 🔑 Set your API key from environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
     print("Warning: OPENAI_API_KEY environment variable not set!")
+
+# 🔥 Initialize Firebase
+db = None
+try:
+    # Initialize Firebase Admin SDK
+    if not firebase_admin._apps:
+        # For Vercel deployment, we'll use default credentials
+        # Make sure to set GOOGLE_APPLICATION_CREDENTIALS in Vercel
+        cred = credentials.ApplicationDefault()
+        firebase_admin.initialize_app(cred)
+    
+    db = firestore.client()
+    print("Firebase initialized successfully")
+except Exception as e:
+    print(f"Warning: Firebase initialization failed: {e}")
+    print("Document storage will not be available")
 
 # 🔥 Initialize Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")

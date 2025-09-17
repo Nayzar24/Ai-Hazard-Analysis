@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "safety_assistant.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     },
     {
@@ -16,7 +16,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/safety_assistant.py"
+      "dest": "/api/index.py"
     },
     {
       "src": "/(.*)",
@@ -24,6 +24,9 @@
     }
   ],
   "env": {
-    "OPENAI_API_KEY": "@openai_api_key"
+    "OPENAI_API_KEY": "@openai_api_key",
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_ANON_KEY": "@supabase_anon_key"
   }
 }
+

@@ -14,3 +14,4 @@ vercel --prod
 
 echo "✅ Deployment complete!"
 echo "Your app is now live and accessible to anyone with the URL!"
+
